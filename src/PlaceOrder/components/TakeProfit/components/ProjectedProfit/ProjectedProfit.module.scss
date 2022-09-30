@@ -1,0 +1,21 @@
+.root {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #fff;
+  margin: 25px 0 12px 0;
+}
+
+.title {
+  opacity: 50%;
+}
+
+.revenue {
+  font-size: 15px;
+  letter-spacing: 0.25px;
+}
+
+.currency {
+  opacity: 50%;
+}
