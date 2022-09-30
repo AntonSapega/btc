@@ -1,40 +1,31 @@
 /* eslint @typescript-eslint/no-use-before-define: 0 */
 
-import React, { useState, ReactNode } from "react";
+import React, { useState, ReactNode } from 'react';
 import {
   TextField,
   TextFieldProps,
   InputBaseProps as MUIInputProps,
   InputLabelProps as MUIInputLabelProps,
-  TooltipProps
-} from "@material-ui/core";
-import cn from "classnames";
+  TooltipProps,
+} from '@material-ui/core';
+import cn from 'classnames';
 
-import { Tooltip } from "../Tooltip/Tooltip";
-import filledInputStyles from "./FilledInput.module.scss";
-import underlinedInputStyles from "./UnderlinedInput.module.scss";
+import { Tooltip } from '../Tooltip/Tooltip';
+import filledInputStyles from './FilledInput.module.scss';
+import underlinedInputStyles from './UnderlinedInput.module.scss';
 
-type Props = Omit<
-  TextFieldProps,
-  "variant" | "onChange" | "className" | "classes" | "error"
-> & {
-  variant?: "underlined" | "filled";
+type Props = Omit<TextFieldProps, 'variant' | 'onChange' | 'className' | 'classes' | 'error'> & {
+  variant?: 'underlined' | 'filled';
   error?: ReactNode;
   forceOpen?: boolean;
-  InputLabelProps?: Omit<
-    TextFieldProps["InputLabelProps"],
-    "className" | "classes"
-  >;
-  InputProps?: Omit<
-    TextFieldProps["InputProps"],
-    "disableUnderline" | "classes" | "className"
-  >;
-  errorPlacement?: TooltipProps["placement"];
+  InputLabelProps?: Omit<TextFieldProps['InputLabelProps'], 'className' | 'classes'>;
+  InputProps?: Omit<TextFieldProps['InputProps'], 'disableUnderline' | 'classes' | 'className'>;
+  errorPlacement?: TooltipProps['placement'];
   onChange?(value: string): void;
 };
 
 const TextInput = ({
-  variant = "filled",
+  variant = 'filled',
   error,
   forceOpen,
   onChange,
@@ -42,32 +33,26 @@ const TextInput = ({
   onBlur,
   InputLabelProps,
   InputProps,
-  errorPlacement = "top",
+  errorPlacement = 'top',
   ...rest
 }: Props) => {
-  const styles =
-    variant === "filled" ? filledInputStyles : underlinedInputStyles;
-  const inputClasses: MUIInputProps["classes"] = {
+  const styles = variant === 'filled' ? filledInputStyles : underlinedInputStyles;
+  const inputClasses: MUIInputProps['classes'] = {
     root: cn(styles.inputWrapper, { [styles.error]: Boolean(error) }),
     focused: cn(styles.inputWrapper, styles.focused),
     adornedEnd: cn(styles.inputWrapper, styles.adornedEnd),
     adornedStart: cn(styles.inputWrapper, styles.adornedStart),
-    input: styles.input
+    input: styles.input,
   };
 
-  const labelClasses: MUIInputLabelProps["classes"] = {
-    root: styles.inputLabel
+  const labelClasses: MUIInputLabelProps['classes'] = {
+    root: styles.inputLabel,
   };
 
   const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <Tooltip
-      open={isFocused && !!error}
-      message={error ?? ""}
-      isError
-      placement={errorPlacement}
-    >
+    <Tooltip open={forceOpen || (isFocused && !!error)} message={error ?? ''} isError placement={errorPlacement}>
       <TextField
         {...rest}
         className={styles.root}
@@ -75,14 +60,14 @@ const TextInput = ({
         onChange={handleChange}
         InputLabelProps={{
           ...InputLabelProps,
-          classes: labelClasses
+          classes: labelClasses,
         }}
         InputProps={{
           ...InputProps,
           onFocus: handleFocus,
           onBlur: handleBlur,
           disableUnderline: true,
-          classes: inputClasses
+          classes: inputClasses,
         }}
       />
     </Tooltip>

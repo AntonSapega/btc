@@ -29,12 +29,14 @@ const ProfitItemList: React.FC<Props> = ({ list, addNewField, removeItem, update
   return (
     <div className={styles.root}>
       {list.map((item) => (
-        <ProfitItem key={item.id} item={item} remove={removeItem} updateItem={updateItem} />
+        <div className={styles['list-item']} key={item.id}>
+          <ProfitItem item={item} remove={removeItem} updateItem={updateItem} />
+        </div>
       ))}
       {list.length < 5 && (
         <TextButton
+          className={styles.btn}
           onClick={() => addNewField()}
-          style={{ marginTop: '20px', fontSize: '15px' }}
           onMouseEnter={handleHover}
           onMouseLeave={handleMouseLeave}
         >

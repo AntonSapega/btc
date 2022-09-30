@@ -3,8 +3,9 @@ import CancelIcon from '@material-ui/icons/Cancel';
 import IconButton from '@material-ui/core/IconButton';
 import cn from 'classnames';
 
-import { Tooltip } from 'components/Tooltip/Tooltip';
+import { NumberInput } from 'components';
 import { IProfitItem } from 'PlaceOrder/model';
+import { QUOTE_CURRENCY } from 'PlaceOrder/constants';
 
 import styles from './ProfitItem.module.scss';
 
@@ -14,11 +15,6 @@ enum fieldNames {
   amount = 'amount',
 }
 
-type InputInfo = {
-  value: string;
-  isActive: boolean;
-};
-
 type Props = {
   item: IProfitItem;
   updateItem(id: string, item: IProfitItem): void;
@@ -27,111 +23,84 @@ type Props = {
 
 const ProfitItem: React.FC<Props> = ({ item, remove, updateItem }) => {
   const { id, profit: profitProp, target: targetPriceProp, amountToBuy: amountToBuyProp, price } = item;
-  const [profit, setProfit] = useState<InputInfo>({
-    value: '0',
-    isActive: false,
+  const [profit, setProfit] = useState({
+    value: 0,
+    errorMessages: {
+      overLimit: 'Maximum profit sum is 500%',
+      lessThanPrevious: "Each target's profit should be greater than the previous one",
+      lessThanMinValue: 'Minimum value is 0.01',
+    },
   });
-  const [targetPrice, setTargetPrice] = useState<InputInfo>({
-    value: '0',
-    isActive: false,
+  const [targetPrice, setTargetPrice] = useState({
+    value: 0,
+    errorMessage: 'Price must be greater than 0',
   });
-  const [amountToBuy, setAmountToBuy] = useState<InputInfo>({
-    value: '0',
-    isActive: false,
+  const [amountToBuy, setAmountToBuy] = useState({
+    value: 0,
+    errorMessage: 'out of 100% selected. Please decrease by',
   });
 
   useEffect(() => {
     setProfit((state) => ({
       ...state,
-      value: item.profit.value.toString(),
+      value: item.profit.value,
     }));
 
     setTargetPrice((state) => ({
       ...state,
-      value: item.target.value.toString(),
+      value: item.target.value,
     }));
 
     setAmountToBuy((state) => ({
       ...state,
-      value: item.amountToBuy.value.toString(),
+      value: item.amountToBuy.value,
     }));
   }, [item]);
 
-  const profitStyles = cn(styles['input-wrapper'], { [styles['input-wrapper__profit_active']]: profit.isActive });
-  const targetStyles = cn(styles['input-wrapper'], { [styles['input-wrapper__target_active']]: targetPrice.isActive });
-  const amountStyles = cn(styles['input-wrapper'], { [styles['input-wrapper__amount_active']]: amountToBuy.isActive });
+  const profitStyles = cn(styles.field, styles['field__profit']);
+  const targetStyles = cn(styles.field, styles['field__target']);
+  const amountStyles = cn(styles.field, styles['field__amount']);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.persist();
-    let inputValue: string = event.target.value;
-
-    if (isNaN(Number(inputValue))) return;
-
-    switch (event.target.name) {
-      case fieldNames.profit:
-        setProfit((state) => ({
-          ...state,
-          value: inputValue,
-        }));
-        break;
-      case fieldNames.target:
-        setTargetPrice((state) => ({
-          ...state,
-          value: inputValue,
-        }));
-        break;
-      case fieldNames.amount:
-        setAmountToBuy((state) => ({
-          ...state,
-          value: inputValue,
-        }));
-        break;
-    }
-  };
-
-  const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
-    invertActiveStatus(event.target.name);
-  };
-
-  const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    invertActiveStatus(event.target.name);
-    refreshSelfDataInStore(event.target.name);
-  };
-
-  const invertActiveStatus = (fieldName: string) => {
-    switch (fieldName) {
-      case fieldNames.profit:
-        setProfit((state) => ({
-          ...state,
-          isActive: !state.isActive,
-        }));
-        break;
-      case fieldNames.target:
-        setTargetPrice((state) => ({
-          ...state,
-          isActive: !state.isActive,
-        }));
-        break;
-      case fieldNames.amount:
-        setAmountToBuy((state) => ({
-          ...state,
-          isActive: !state.isActive,
-        }));
-        break;
-    }
-  };
-
-  const refreshSelfDataInStore = (inputName: string) => {
-    let newProfitValue: number = +profit.value;
-    let newTargetValue: number = +targetPrice.value;
-    let newAmountToBuy: number = +amountToBuy.value;
+  const handleChange = (inputValue: number | null, inputName: string) => {
+    if (inputValue === null) return;
 
     switch (inputName) {
       case fieldNames.profit:
-        newTargetValue = price + price * (Number(profit.value) / 100);
+        setProfit((state) => ({
+          ...state,
+          value: inputValue,
+        }));
         break;
       case fieldNames.target:
-        newProfitValue = price !== 0 ? (100 * (Number(targetPrice.value) - price)) / price : +profit.value;
+        setTargetPrice((state) => ({
+          ...state,
+          value: inputValue,
+        }));
+        break;
+      case fieldNames.amount:
+        setAmountToBuy((state) => ({
+          ...state,
+          value: inputValue,
+        }));
+        break;
+    }
+  };
+
+  const handleBlur = (fieldName: string) => {
+    refreshSelfDataInStore(fieldName);
+  };
+
+  const refreshSelfDataInStore = (inputName: string) => {
+    let newProfitValue: number = profit.value;
+    let newTargetValue: number = targetPrice.value;
+    let newAmountToBuy: number = amountToBuy.value;
+
+    switch (inputName) {
+      case fieldNames.profit:
+        newTargetValue = price + price * (profit.value / 100);
+        break;
+      case fieldNames.target:
+        newProfitValue = price !== 0 ? (100 * (targetPrice.value - price)) / price : profit.value;
         break;
     }
 
@@ -161,79 +130,71 @@ const ProfitItem: React.FC<Props> = ({ item, remove, updateItem }) => {
 
   return (
     <div className={styles.profitItem}>
-      <label className={styles.label}>
-        <span>Profit</span>
-        <Tooltip
-          open={profitProp.overLimitError || profitProp.lessThanPreviousError || profitProp.lessThanMinValueError}
-          placement="top"
-          message={
-            profitProp.overLimitError
-              ? 'Maximum profit sum is 500%'
-              : profitProp.lessThanPreviousError
-              ? "Each target's profit should be greater than the previous one"
-              : 'Minimum value is 0.01'
-          }
-          isError
-        >
-          <div className={profitStyles}>
-            <input
-              className={styles.input}
-              type="text"
-              autoComplete="off"
-              name={fieldNames.profit}
-              value={profit.value}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-            />
-            %
-          </div>
-        </Tooltip>
-      </label>
-      <label className={styles.label}>
-        <span>Target price</span>
-        <Tooltip open={targetPriceProp.isError} placement="top" message="Price must be greater than 0" isError>
-          <div className={targetStyles}>
-            <input
-              className={styles.input}
-              type="text"
-              autoComplete="off"
-              name={fieldNames.target}
-              value={targetPrice.value}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-            />
-            USDT
-          </div>
-        </Tooltip>
-      </label>
-      <label className={styles.label}>
-        <span>Amount to buy</span>
-        <Tooltip
-          open={amountToBuyProp.error !== null}
-          placement="top"
-          message={`${amountToBuyProp.error?.currentSum} out of 100% selected. Please decrease by ${amountToBuyProp.error?.decreaseBy}`}
-          isError
-        >
-          <div className={amountStyles}>
-            <input
-              className={styles.input}
-              type="text"
-              autoComplete="off"
-              name={fieldNames.amount}
-              value={amountToBuy.value}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-            />
-            %
-          </div>
-        </Tooltip>
-      </label>
-      <IconButton className={styles.closeIcon} onClick={() => remove(id)}>
-        <CancelIcon style={{ fontSize: '16px' }} />
-      </IconButton>
+      <div className={styles.wrapper}>
+        <div className={profitStyles}>
+          <label className={styles.label} htmlFor="profit-field">
+            Profit
+          </label>
+          <NumberInput
+            error={
+              profitProp.overLimitError
+                ? profit.errorMessages.overLimit
+                : profitProp.lessThanPreviousError
+                ? profit.errorMessages.lessThanPrevious
+                : profitProp.lessThanMinValueError
+                ? profit.errorMessages.lessThanMinValue
+                : false
+            }
+            forceOpen={
+              profitProp.overLimitError || profitProp.lessThanPreviousError || profitProp.lessThanMinValueError
+            }
+            id="profit-field"
+            value={profit.value}
+            variant="underlined"
+            InputProps={{ endAdornment: <span className={styles.size}>%</span> }}
+            onChange={(value) => handleChange(value, fieldNames.profit)}
+            onBlur={() => handleBlur(fieldNames.profit)}
+          />
+        </div>
+        <div className={targetStyles}>
+          <label className={styles.label} htmlFor="target-field">
+            Target price
+          </label>
+          <NumberInput
+            error={targetPriceProp.isError ? targetPrice.errorMessage : false}
+            forceOpen={targetPriceProp.isError}
+            id="target-field"
+            value={targetPrice.value}
+            variant="underlined"
+            InputProps={{ endAdornment: <span className={styles.size}>{QUOTE_CURRENCY}</span> }}
+            onChange={(value) => handleChange(value, fieldNames.target)}
+            onBlur={() => handleBlur(fieldNames.target)}
+          />
+        </div>
+        <div className={amountStyles}>
+          <label className={styles.label} htmlFor="amount-field">
+            Amount to buy
+          </label>
+          <NumberInput
+            error={
+              amountToBuyProp.error !== null
+                ? `${amountToBuyProp.error?.currentSum} ${amountToBuy.errorMessage} ${amountToBuyProp.error?.decreaseBy}`
+                : false
+            }
+            forceOpen={amountToBuyProp.error !== null}
+            id="amount-field"
+            value={amountToBuy.value}
+            variant="underlined"
+            InputProps={{ endAdornment: <span className={styles.size}>%</span> }}
+            onChange={(value) => handleChange(value, fieldNames.amount)}
+            onBlur={() => handleBlur(fieldNames.profit)}
+          />
+        </div>
+
+        <IconButton className={styles.closeBtn} onClick={() => remove(id)}>
+          <CancelIcon className={styles.cancelIcon} />
+        </IconButton>
+      </div>
     </div>
   );
 };
