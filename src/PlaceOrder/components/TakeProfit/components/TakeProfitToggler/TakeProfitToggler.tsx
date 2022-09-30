@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { Tooltip } from 'components/Tooltip/Tooltip';
 import { Image } from 'components/Image/Image';

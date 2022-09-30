@@ -1,36 +1,7 @@
 import { observable, computed, action } from 'mobx';
-import { v4 as uuid } from 'uuid';
 
-import { OrderSide, Profit, IProfitItem, ITargetPrice, IProfit, IAmountToBuy } from '../model';
-
-export class TakeProfitItem implements IProfitItem {
-  id: string = uuid();
-  profit: IProfit;
-  target: ITargetPrice;
-  amountToBuy: IAmountToBuy;
-
-  constructor(public profitValue: number, public price: number, public amountToBuyValue: number) {
-    this.profit = {
-      value: profitValue,
-      isActive: false,
-      overLimitError: false,
-      lessThanMinValueError: false,
-      lessThanPreviousError: false,
-    };
-    this.target = {
-      value: price + price * (profitValue / 100),
-      isActive: false,
-      isError: false,
-    };
-    this.amountToBuy = {
-      value: amountToBuyValue,
-      isActive: false,
-      error: null,
-    };
-    this.price = price;
-  }
-}
-
+import { OrderSide, Profit, IProfitItem } from '../model';
+import { TakeProfitItem } from 'PlaceOrder/helpers/TakeProfitItem';
 export class PlaceOrderStore {
   @observable activeOrderSide: OrderSide = 'buy';
   @observable price: number = 0;
@@ -56,11 +27,11 @@ export class PlaceOrderStore {
 
   @computed get projectedProfit(): number {
     return this.activeOrderSide === 'buy'
-      ? this.takeProfitList.reduce((acc, curr) => {
+      ? this.profitList.reduce((acc, curr) => {
           const expectedProfit = (curr.amountToBuy.value / 100) * (curr.target.value - curr.price);
           return acc + expectedProfit;
         }, 0)
-      : this.takeProfitList.reduce((acc, curr) => {
+      : this.profitList.reduce((acc, curr) => {
           const expectedProfit = (curr.amountToBuy.value / 100) * (curr.price - curr.target.value);
           return acc + expectedProfit;
         }, 0);

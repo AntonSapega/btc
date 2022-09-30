@@ -1,5 +1,5 @@
 /* eslint @typescript-eslint/no-use-before-define: 0 */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { observer } from 'mobx-react';
 
 import { TakeProfitToggler } from './components/TakeProfitToggler/TakeProfitToggler';
@@ -8,7 +8,6 @@ import { ProjectedProfit } from './components/ProjectedProfit/ProjectedProfit';
 import { useStore } from '../../context';
 
 import styles from './TakeProfit.module.scss';
-import { NumberInput } from '../../../components/NumberInput/NumberInput';
 import { IProfitItem } from '../../model';
 
 const TakeProfit = observer(() => {
@@ -47,7 +46,7 @@ const TakeProfit = observer(() => {
       {isToggleOn && (
         <ProfitItemList
           list={profitList}
-          addNewField={handleAddNewField} //! rename to addNewItem
+          addNewItem={handleAddNewField}
           removeItem={removeProfitItem}
           updateItem={handleUpdateItem}
         />
